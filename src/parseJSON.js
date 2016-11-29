@@ -9,7 +9,11 @@ var parseJSON = function(json) {
 
   var result;
 
-  var json = json.trim();
+  if (json == null) {
+  	return json;
+  }
+  
+  json = json.trim();
 
   if (json.charAt(0) == "[" && json.charAt(json.length - 1) != "]") {
   	return false;
@@ -38,6 +42,7 @@ var parseJSON = function(json) {
 	return result;
   }
 
+  // Object
   if (json.charAt(0) == "{" && json.charAt(json.length - 1) == "}") {
   	result = {};
 
@@ -55,31 +60,93 @@ var parseJSON = function(json) {
   	var values = json.slice(1,json.length - 1);
 
   	if (json.indexOf(",") == -1) {
+  		var parseString = json;
 
-  		var key = values.split(": ")[0].replace(/^"(.*)"$/, '$1');
-		var value = values.split(": ")[1].replace(/^"(.*)"$/, '$1');
+  		var keyStart = parseString.indexOf('"');
+		var keyEnd = parseString.indexOf(':') - 1;
+		var key = parseString.slice(keyStart+1, keyEnd);
+		// parseString = parseString.slice(keyEnd);
 
-		if (value == "") {
-			result[key] = "";
-		}
-		else {
-			result[key] = parseJSON(value);	
+		var valueStart = parseString.indexOf(":");
+		// if (parseString.charAt(valueStart + 1) == "[") {
+
+		// }
+		// else {
+			
+		// }
+		var valueEnd = parseString.indexOf(',', valueStart);
+		
+
+		valueEnd = valueEnd != -1 ? valueEnd : parseString.lastIndexOf('}');
+		var value = parseString.slice(valueStart+1, valueEnd);
+
+		parseString = parseString.slice(valueEnd + 1);
+		
+		// if (valueEnd == parseString.indexOf('}')) {
+		// 	parseString = "";
+		// }
+
+		key = parseJSON(key);
+		value = parseJSON(value);
+
+		// if (typeof value == 'object' && value != null) {
+		// 	value = {}
+		// }
+
+		if (key != ""){
+			result[parseJSON(key)] = value;	
 		}
   	}
   	else {
-  		var values = values.split(",");
-  		for (var i=0; i < values.length; i++) {
-  			var key = values[i].trim().split(": ")[0].replace(/^"(.*)"$/, '$1');
-  			var value = values[i].trim().split(": ")[1].replace(/^"(.*)"$/, '$1');
+  		var parseString = json;
+  		while (parseString.indexOf(":")!= -1) {
+  			var keyStart = parseString.indexOf('"');
+  			var keyEnd = parseString.indexOf(':') - 1;
+  			var key = parseString.slice(keyStart+1, keyEnd);
+  			// parseString = parseString.slice(keyEnd);
 
-  			if (value == "") {
-  				result[key] = "";
-  			}
-  			else {
-  				result[key] = parseJSON(value);	
+  			var valueStart = parseString.indexOf(":");
+  			var valueEnd = parseString.indexOf(',', valueStart);
+  			
+
+  			valueEnd = valueEnd != -1 ? valueEnd : parseString.lastIndexOf('}');
+  			var value = parseString.slice(valueStart+1, valueEnd);
+
+  			parseString = parseString.slice(valueEnd + 1);
+  			
+  			// if (valueEnd == parseString.indexOf('}')) {
+  			// 	parseString = "";
+  			// }
+
+  			key = parseJSON(key);
+  			value = parseJSON(value);
+  			// if (typeof value == 'object'){
+  			// 	value = {};
+  			// }
+  			if (key != ""){
+  				if (typeof value == 'object' && value != null) {
+  					value = {}
+  				}
+
+  				result[parseJSON(key)] = value;	
   			}
   			
-		}
+  		}
+
+
+  // 		var values = values.split(",");
+  // 		for (var i=0; i < values.length; i++) {
+  // 			var key = values[i].trim().split(": ")[0].replace(/^"(.*)"$/, '$1');
+  // 			var value = values[i].trim().split(": ")[1].replace(/^"(.*)"$/, '$1');
+
+  // 			if (value == "") {
+  // 				result[key] = "";
+  // 			}
+  // 			else {
+  // 				result[key] = parseJSON(value);	
+  // 			}
+  			
+		// }
   	}
 
   	return result;
@@ -88,6 +155,10 @@ var parseJSON = function(json) {
   // number
   if (/^-?[\d.]+(?:e-?\d+)?$/.test(json)) {
   	return parseFloat(json, 10);
+  }
+
+  if (typeof json == "boolean") {
+  	return json;
   }
 
   // string
